@@ -15,8 +15,8 @@ SRCS := demo.c microui.c
 
 all: $(TARGET)
 
-$(TARGET): $(SRCS) RGFW.h
-	$(CC) $(CFLAGS) $(SRCS) $(LIBS) -o $@
+$(TARGET): $(SRCS) RGFW.h rglLoad.h
+	$(CC) $(CFLAGS) -I. $(SRCS) $(LIBS) -o $@
 
 run: $(TARGET)
 	./$(TARGET)
