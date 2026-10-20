@@ -174,13 +174,14 @@ void mu_end(mu_Context *ctx) {
   /* unset focus if focus id was not touched this frame */
   if (!ctx->updated_focus) { ctx->focus = 0; }
   ctx->updated_focus = 0;
-
+  
+  //这里一定要用next_hover_root取最新值, 否则可能会导致层级失控
   /* bring hover root to front if mouse was pressed */
   if (ctx->mouse_pressed && ctx->next_hover_root &&
       ctx->next_hover_root->zindex < ctx->last_zindex &&
       ctx->next_hover_root->zindex >= 0
   ) {
-    mu_bring_to_front(ctx, ctx->next_hover_root);
+    mu_bring_to_front(ctx, ctx->next_hover_root); //提升一个zindex层级
   }
 
   /* reset input state */
@@ -194,6 +195,7 @@ void mu_end(mu_Context *ctx) {
   n = ctx->root_list.idx;
   qsort(ctx->root_list.items, n, sizeof(mu_Container*), compare_zindex);
 
+  // 将各个Window的绘制指令穿成一串，从层级最高的开始绘制
   /* set root container jump commands */
   for (i = 0; i < n; i++) {
     mu_Container *cnt = ctx->root_list.items[i];
@@ -216,10 +218,11 @@ void mu_end(mu_Context *ctx) {
 
 void mu_set_focus(mu_Context *ctx, mu_Id id) {
   ctx->focus = id;
-  ctx->updated_focus = 1;
+  ctx->updated_focus = 1; //一个标志位，若是被置为1那么表示本帧延续focus标志位
 }
 
 
+//转化成了32位的随机hash值
 /* 32bit fnv-1a hash */
 #define HASH_INITIAL 2166136261
 
@@ -230,7 +233,7 @@ static void hash(mu_Id *hash, const void *data, int size) {
   }
 }
 
-
+//生成一个Id
 mu_Id mu_get_id(mu_Context *ctx, const void *data, int size) {
   int idx = ctx->id_stack.idx;
   mu_Id res = (idx > 0) ? ctx->id_stack.items[idx - 1] : HASH_INITIAL;
@@ -260,13 +263,15 @@ void mu_pop_clip_rect(mu_Context *ctx) {
   pop(ctx->clip_stack);
 }
 
-
+//拿到栈顶的Rect，然后取交集，这样就能保证窗口内的层级顺序
 mu_Rect mu_get_clip_rect(mu_Context *ctx) {
   expect(ctx->clip_stack.idx > 0);
   return ctx->clip_stack.items[ctx->clip_stack.idx - 1];
 }
 
-
+//检测Clip区域的类型，如果完全超出视口位置那么就直接全部CLIP掉
+//如果完全在Clip的位置那么就完全不用裁切
+//如果有一部分在视口位置有一部分不在视口位置那么就部分裁切
 int mu_check_clip(mu_Context *ctx, mu_Rect r) {
   mu_Rect cr = mu_get_clip_rect(ctx);
   if (r.x > cr.x + cr.w || r.x + r.w < cr.x ||
