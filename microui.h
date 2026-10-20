@@ -147,14 +147,15 @@ typedef struct {
   int indent;
 } mu_Layout;
 
+//单个面板
 typedef struct {
-  mu_Command *head, *tail;
-  mu_Rect rect;
-  mu_Rect body;
-  mu_Vec2 content_size;
-  mu_Vec2 scroll;
-  int zindex;
-  int open;
+  mu_Command *head, *tail;  //绘制命令链表指针
+  mu_Rect rect; //外框矩形
+  mu_Rect body; //内容区矩形
+  mu_Vec2 content_size; //实际内容区，这个东西若是超出了body的大小那么就会出现滚顶条
+  mu_Vec2 scroll; //滚动偏移量
+  int zindex; //层级, 越大越靠前
+  int open; //打开或者关闭容器
 } mu_Container;
 
 typedef struct {

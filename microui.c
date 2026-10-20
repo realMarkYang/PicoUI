@@ -49,6 +49,10 @@
 
 static mu_Rect unclipped_rect = { 0, 0, 0x1000000, 0x1000000 };
 
+//padding管的是控件的内边距，比如按钮内字体与空间左边框的距离
+//indent管的是控件整体缩进，比如空间的起始位置x
+//spacing 是控件间距
+
 static mu_Style default_style = {
   /* font | size | padding | spacing | indent */
   NULL, { 68, 10 }, 5, 4, 24,
@@ -93,12 +97,12 @@ mu_Color mu_color(int r, int g, int b, int a) {
   return res;
 }
 
-
+//根据质心去拓展的(0.5f,0.5f), 用来画边界
 static mu_Rect expand_rect(mu_Rect rect, int n) {
   return mu_rect(rect.x - n, rect.y - n, rect.w + n * 2, rect.h + n * 2);
 }
 
-
+//取两块矩形之间的交集, 用来裁剪UI, 原理类似于Mask，可以用在ScrollRect上面
 static mu_Rect intersect_rects(mu_Rect r1, mu_Rect r2) {
   int x1 = mu_max(r1.x, r2.x);
   int y1 = mu_max(r1.y, r2.y);
@@ -109,12 +113,12 @@ static mu_Rect intersect_rects(mu_Rect r1, mu_Rect r2) {
   return mu_rect(x1, y1, x2 - x1, y2 - y1);
 }
 
-
+//鼠标命中测试, 判断一个点是否在一个矩形内部
 static int rect_overlaps_vec2(mu_Rect r, mu_Vec2 p) {
   return p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h;
 }
 
-
+//一个绘制帧，这个东西应该是只绘制最基本的Window，没细看
 static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
   mu_draw_rect(ctx, rect, ctx->style->colors[colorid]);
   if (colorid == MU_COLOR_SCROLLBASE  ||
@@ -126,7 +130,7 @@ static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
   }
 }
 
-
+//初始化mu_Context
 void mu_init(mu_Context *ctx) {
   memset(ctx, 0, sizeof(*ctx));
   ctx->draw_frame = draw_frame;
@@ -147,7 +151,7 @@ void mu_begin(mu_Context *ctx) {
   ctx->frame++;
 }
 
-
+//将zindex从小到大排序, 按照层级顺序绘制
 static int compare_zindex(const void *a, const void *b) {
   return (*(mu_Container**) a)->zindex - (*(mu_Container**) b)->zindex;
 }
